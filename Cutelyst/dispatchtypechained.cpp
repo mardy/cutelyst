@@ -170,8 +170,17 @@ DispatchType::MatchType DispatchTypeChained::match(Context *c, const QString &pa
 
     Q_D(const DispatchTypeChained);
 
-    const BestActionMatch ret = d->recurseMatch(args.size(), QStringLiteral("/"), path.split(QLatin1Char('/')));
-    const ActionList chain = ret.actions;
+    const QStringList pathParts = path.split(QLatin1Char('/'));
+    const QStringList namespaces = d->namespaces + QStringList{ QStringLiteral("/") };
+    BestActionMatch ret;
+    ActionList chain;
+    for (const QString &ns: namespaces) {
+        ret = d->recurseMatch(args.size(), ns, pathParts);
+        chain = ret.actions;
+        if (!ret.isNull && !chain.isEmpty()) {
+            break;
+        }
+    }
     if (ret.isNull || chain.isEmpty()) {
         return NoMatch;
     }
@@ -209,7 +218,7 @@ bool DispatchTypeChained::registerAction(Action *action)
         return false;
     }
 
-    const QString chainedTo = chainedList.first();
+    QString chainedTo = chainedList.first();
     if (chainedTo == QLatin1Char('/') + action->name()) {
         qCCritical(CUTELYST_DISPATCHER_CHAINED)
                 << "Actions cannot chain to themselves registering /" << action->name();
@@ -219,6 +228,11 @@ bool DispatchTypeChained::registerAction(Action *action)
     const QStringList pathPart = attributes.values(QLatin1String("PathPart"));
 
     QString part = action->name();
+    if (chainedTo.isEmpty()) {
+        chainedTo = QStringLiteral("/") + action->ns();
+        if (!d->namespaces.contains(chainedTo))
+            d->namespaces.append(chainedTo);
+    }
 
     if (pathPart.size() == 1 && !pathPart[0].isEmpty()) {
         part = pathPart[0];

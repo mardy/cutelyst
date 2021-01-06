@@ -47,6 +47,7 @@ public:
     Actions endPoints;
     StringActionMap actions;
     StringStringActionsMap childrenOf;
+    QStringList namespaces;
 };
 
 }

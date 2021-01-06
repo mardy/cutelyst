@@ -465,7 +465,7 @@ QString ControllerPrivate::parseChainedAttr(const QString &attr)
 {
     QString ret = QStringLiteral("/");
     if (attr.isEmpty()) {
-        return ret;
+        return QStringLiteral("");
     }
 
     if (attr == QStringLiteral(".")) {
